@@ -2127,7 +2127,7 @@ FileMan Query Language (FMQL)</Description>
 </Parameter>
 
 <Parameter name="NAMESPACE">
-<Default>http://hawaiiresourcegroup.com/</Default>
+<Default>http://caregraf.com/</Default>
 </Parameter>
 
 <Parameter name="USECLASSNAMESPACES">
