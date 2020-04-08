@@ -1,2 +1,3 @@
-# FMQLv1
-V1.* FMQL
+# FMQL Release
+
+Latest Server (VistA) side MUMPS, REST-based Endpoint
