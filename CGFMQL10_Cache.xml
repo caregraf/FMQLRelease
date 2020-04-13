@@ -80,7 +80,6 @@ ALL(REPLY,PARAMS) ;
  S AFTERIEN=$G(PARAMS("AFTERIEN"))  ; float value enforced above this pt
  I AFTERIEN'="" S OFFSET=0  ; Make sure AFTERIEN takes precedence
  S UPTOIEN=$G(PARAMS("UPTOIEN"))
- ; S:UPTOIEN<=AFTERIEN UPTOIEN=""  ; cancels out if UPTO <= AFTER
  ; Forcing default CNODESTOP to be 10
  I PARAMS("OP")="DESCRIBE" S CNODESTOP=$S($D(PARAMS("CNODESTOP")):$G(PARAMS("CNODESTOP")),1:10)
  ; Default value is "" for COUNT
@@ -103,7 +102,6 @@ ALL(REPLY,PARAMS) ;
  I PARAMS("OP")'="COUNT" D
  . D:$D(PARAMS("IN")) DASSERT^FMQLJSON(REPLY,"IN",PARAMS("IN"))
  . I $G(LIMIT)>-1 D DASSERT^FMQLJSON(REPLY,"LIMIT",LIMIT,1)
- . ; TODO: handle alternative of AFTERIEN for OFFSET above and do one or other
  . I $G(PARAMS("AFTERIEN"))'="" D DASSERT^FMQLJSON(REPLY,"AFTERIEN",PARAMS("AFTERIEN"),1)
  . I $G(OFFSET)>0 D DASSERT^FMQLJSON(REPLY,"OFFSET",OFFSET,1)
  . I $G(PARAMS("UPTOIEN")) D DASSERT^FMQLJSON(REPLY,"UPTOIEN",PARAMS("UPTOIEN"),1)
@@ -172,7 +170,7 @@ ONEOFTYPE(REPLY,FLINF,FAR,FID,CNODESTOP,TRACK,EMBEDDED) ;
  . . . Q:CCNT=0  ; Don't mark empty bnodes (Pharma et al)
  . . . S TRACK("TCONTCNT")=$G(TRACK("TCONTCNT"))+CCNT  ; prep for v3.1 CSTOP wider
  . . . N ISLIST S ISLIST=$S(BFLINF("NOFIELDS")=1:1,1:0)
- . . . D BNLISTSTART^FMQLJSON(REPLY,BFLINF("EFILE"),FDINF("LABEL"),FIELD,ISLIST)
+ . . . D BNLISTSTART^FMQLJSON(REPLY,FDINF("PRED"),ISLIST)
  . . . ; No need for NFAR or BFLINF if FLINF (even if CNode) supports ARRAY
  . . . N BID S BID=0 F  S BID=$O(@NFAR@(BID)) Q:BID'=+BID  D
  . . . . D ONEOFTYPE(REPLY,.BFLINF,NFAR,BID_"_"_FID,CNODESTOP,.TRACK,1)
@@ -351,8 +349,8 @@ CNTREFS(REPLY,PARAMS) ;
  . . . D DASSERT^FMQLJSON(REPLY,"file",FLINF("EFILE"))
  . . . D DASSERT^FMQLJSON(REPLY,"fileLabel",FILELABEL)
  . . . D DASSERT^FMQLJSON(REPLY,"field",FIELD)
- . . . ; NOT made unique to file as too costly for larger file's referenced - pred may lack qualifier
- . . . D DASSERT^FMQLJSON(REPLY,"fieldLabel",$$FIELDTOPRED^FMQLUTIL(FDINF("LABEL")))
+ . . . ; Note: unqualified pred in record so could be dup. Too costly to dedup dynamically
+ . . . D DASSERT^FMQLJSON(REPLY,"fieldLabel",FDINF("PRED"))
  . . . D DASSERT^FMQLJSON(REPLY,"count",CNT,1)
  . . . D DICTEND^FMQLJSON(REPLY)
  . . . S TCNT=TCNT+CNT
@@ -640,12 +638,12 @@ WPAEND(JSON) ;
  ;
  ; ISL is NOT being used now
  ;
-BNLISTSTART(JSON,BFL,BFDLBL,BFD,ISL) ; 
+BNLISTSTART(JSON,BPRED,ISL) ; 
  D PUTDATA(JSON,@JSON@("LSTLVL",@JSON@("LSTLVL")))
  S @JSON@("LSTLVL",@JSON@("LSTLVL"))=","
  S @JSON@("LSTLVL")=@JSON@("LSTLVL")+1
  S @JSON@("LSTLVL",@JSON@("LSTLVL"))=""
- D PUTDATA(JSON,""""_$$FIELDTOPRED^FMQLUTIL(BFDLBL)_""":[")
+ D PUTDATA(JSON,""""_BPRED_""":[")
  Q
 BNLISTEND(JSON) ;
  D CONTEND(JSON,"]")
@@ -1236,7 +1234,7 @@ FMQLSLAB ;CG/CD - Caregraf - FMQL Query Processor; 04/03/2020  11:30
 BLDBNODES(FAR6304,FID) N BID,FLOC,ID,VAL
  S ID=$P(FID,"_")
  S BID=1
- D BNLISTSTART^FMQLJSON(REPLY,"9999999999_6304","CHVALS","9999999999")
+ D BNLISTSTART^FMQLJSON(REPLY,"chvals",0)
  S FLOC=1 F  S FLOC=$O(@FAR6304@(ID,FLOC)) Q:FLOC'=+FLOC  D
  . S VAL=@FAR@(ID,FLOC)
  . D BLDBNODE(FLOC,VAL,BID_"_"_FID)
@@ -1542,6 +1540,8 @@ BLDFDINF(FLINF,FIELD,FDINF) ;
  N FLAGS S FLAGS=$P(^DD(FILE,FIELD,0),"^",2)
  S FDINF("FLAGS")=FLAGS
  S FDINF("LABEL")=$P(^DD(FILE,FIELD,0),"^")
+ S FDINF("PRED")=$$FIELDTOPRED(FDINF("LABEL"))
+ I FDINF("PRED")="" S FDINF("BAD")="Empty Pred" Q  ; ex/ '...' 
  ; Date/Number/Codes/String/WP String/Pointer/V Pointer/MULT/MUMPS
  I +FLAGS D  ; WP and MULT flag start with the subfile number
  . ; WP special - need to reach into its 'file' to see what it is
@@ -1629,7 +1629,7 @@ BLDFLHIE(FLINF,EXTENT)
  N FIELD S FIELD=0 F  S FIELD=$O(^DD(FLINF("FILE"),FIELD)) Q:FIELD'=+FIELD  D
  . N FDINF D BLDFDINF^FMQLUTIL(.FLINF,FIELD,.FDINF)
  . Q:$D(FDINF("BAD"))
- . N PRED S PRED=$$FIELDTOPRED(FDINF("LABEL")) 
+ . N PRED S PRED=FDINF("PRED")  ; unqualified done in FDINF
  . S:$E(PRED)?1N PRED="_"_PRED  ; JSON not start with number (www.w3.org/TR/1999/REC-xml-names-19990114/#NT-NCName)
  . S:$D(SEEN(PRED)) PRED=PRED_"_"_$TR(FDINF("FIELD"),".","_")
  . S FDINF("PRED")=PRED
@@ -1817,12 +1817,14 @@ MAKEFMDATE(XMLDATE) ;
  ;
  ;
  ; Predicate is lower alphanum and _
- ; ... called from JSON over and over ie/ not in DATA or SCH where it should be
+ ;
+ ; Disallow . - only saw once (as ...). FDINF will make itself bad
+ ;
  ;
 FIELDTOPRED(FIELD) ;
- SET ALW="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz_ /"
- SET UPC="ABCDEFGHIJKLMNOPQRSTUVWXYZ /"
- SET LOC="abcdefghijklmnopqrstuvwxyz__"
+ N ALW S ALW="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz_ /"
+ N UPC S UPC="ABCDEFGHIJKLMNOPQRSTUVWXYZ /"
+ N LOC S LOC="abcdefghijklmnopqrstuvwxyz__"
  N PRED S PRED=$TR($TR(FIELD,$TR(FIELD,ALW)),UPC,LOC)
  Q PRED
  ;
