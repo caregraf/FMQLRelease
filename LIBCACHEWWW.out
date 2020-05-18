@@ -1,0 +1,15 @@
+-rwxr-xr-x. 1 cacheusr cacheusr 1.4M Mar 30 16:10 /u01/cachesys/bin/libcachebasic.so
+-rwxr-xr-x. 1 cacheusr cacheusr 341K Mar 30 16:10 /u01/cachesys/bin/libcachecc.so
+-rwxr-xr-x. 1 cacheusr cacheusr 280K Mar 30 16:10 /u01/cachesys/bin/libcachecom.so
+-rwxr-xr-x. 1 cacheusr cacheusr 357K Mar 30 16:10 /u01/cachesys/bin/libcachecss.so
+-rwxr-xr-x. 1 cacheusr cacheusr 415K Mar 30 16:10 /u01/cachesys/bin/libcachehtml.so
+-rwxr-xr-x. 1 cacheusr cacheusr  55K Oct  2  2018 /u01/cachesys/bin/libcachej.so
+-rwxr-xr-x. 1 cacheusr cacheusr 2.1M Mar 30 16:10 /u01/cachesys/bin/libcachemvbasic.so
+-rwxr-xr-x. 1 cacheusr cacheusr 2.7M Mar 30 16:10 /u01/cachesys/bin/libcacheobjectscript.so
+-rwxr-xr-x. 1 cacheusr cacheusr 190K Mar 30 16:10 /u01/cachesys/bin/libcachepm.so
+-rwxr-xr-x. 1 cacheusr cacheusr 656K Mar 30 16:10 /u01/cachesys/bin/libcachepp.so
+-rwxr-xr-x. 1 cacheusr cacheusr 290K Mar 30 16:10 /u01/cachesys/bin/libcachescanner.so
+-rwxr-xr-x. 1 cacheusr cacheusr 6.9M Apr  3 22:03 /u01/cachesys/bin/libcache.so
+-rwxr-xr-x. 1 cacheusr cacheusr 2.1M Mar 30 16:10 /u01/cachesys/bin/libcachesqlsyn.so
+-rwxr-xr-x. 1 cacheusr cacheusr 1.4M Mar 30 16:10 /u01/cachesys/bin/libcacheudl.so
+-rwxr-xr-x. 1 cacheusr cacheusr 484K Mar 30 16:10 /u01/cachesys/bin/libcachexmlsyn.so
